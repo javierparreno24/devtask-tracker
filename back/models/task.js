@@ -1,7 +1,7 @@
 // backend/models/Task.js
 const mongoose = require('mongoose');
 
-// Definimos el esquema (el plano de arquitectura de tu dato)
+// Definimos el esquema 
 const TaskSchema = new mongoose.Schema({
     titulo: {
         type: String,
