@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json()); // Vital para entender los JSON que le enviemos
+app.use(express.json()); 
 
 // --- RUTAS DE LA API ---
 
@@ -30,7 +30,7 @@ app.post('/api/tasks', async (req, res) => {
         // Creamos la tarea con los datos que vienen del usuario (req.body)
         const newTask = new Task(req.body);
         const savedTask = await newTask.save(); // Guardar en Atlas
-        res.status(201).json(savedTask); // 201 = "Created"
+        res.status(201).json(savedTask); 
     } catch (error) {
         res.status(400).json({ error: 'Error al crear la tarea' });
     }
