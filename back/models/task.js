@@ -11,6 +11,10 @@ const TaskSchema = new mongoose.Schema({
         type: String,
         required: true 
     },
+    descripcion: {
+        type: String,
+        required: false
+    },
     estado: {
         type: String,
         enum: ['pending', 'done'], // Limitamos los valores permitidos
