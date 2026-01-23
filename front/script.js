@@ -1,18 +1,22 @@
 const API_URL = 'http://localhost:3000/api/tasks';
+const BACKLOG_URL = 'http://localhost:3000/api/backlog';
 
-// DOM Elements
+// Elementos del DOM
 const taskForm = document.getElementById('task-form');
 const taskList = document.getElementById('task-list');
+const backlogList = document.getElementById('backlog-list');
 const btnSave = document.getElementById('btn-save');
 
+let currentView = 'active'; // 'active' o 'backlog'
+
 /**
- * Fetch and display all tasks
+ * Obtiene y muestra todas las tareas
  */
 async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
         const tasks = await response.json();
-        renderTasks(tasks);
+        renderTasks(tasks, taskList, false);
     } catch (error) {
         console.error('Error al cargar tareas:', error);
         taskList.innerHTML = '<div class="empty-msg">Error al conectar con el servidor.</div>';
@@ -20,26 +24,72 @@ async function fetchTasks() {
 }
 
 /**
- * Render task list to the DOM
+ * Obtiene y muestra el historial de tareas
  */
-function renderTasks(tasks) {
+async function fetchBacklog() {
+    try {
+        const response = await fetch(BACKLOG_URL);
+        const tasks = await response.json();
+        renderTasks(tasks, backlogList, true);
+    } catch (error) {
+        console.error('Error al cargar historial:', error);
+        backlogList.innerHTML = '<div class="empty-msg">Error al cargar el historial.</div>';
+    }
+}
+
+/**
+ * Alterna entre la vista de tareas activas y el historial
+ */
+function switchView(view) {
+    currentView = view;
+
+    // Actualizar botones de pestañas
+    document.getElementById('tab-active').classList.toggle('active', view === 'active');
+    document.getElementById('tab-backlog').classList.toggle('active', view === 'backlog');
+
+    // Mostrar/ocultar secciones
+    document.getElementById('active-section').style.display = view === 'active' ? 'block' : 'none';
+    document.getElementById('backlog-section').style.display = view === 'backlog' ? 'block' : 'none';
+
+    // Cargar datos según la vista
+    if (view === 'active') {
+        fetchTasks();
+    } else {
+        fetchBacklog();
+    }
+}
+
+/**
+ * Renderiza la lista de tareas en el DOM
+ */
+function renderTasks(tasks, container, isBacklog) {
     if (tasks.length === 0) {
-        taskList.innerHTML = '<div class="empty-msg">No hay tareas pendientes. Empieza creando una arriba.</div>';
+        container.innerHTML = isBacklog
+            ? '<div class="empty-msg">El historial está vacío.</div>'
+            : '<div class="empty-msg">No hay tareas pendientes. Empieza creando una arriba.</div>';
         return;
     }
 
-    taskList.innerHTML = '';
+    container.innerHTML = '';
 
-    // Sort by date (newest first)
-    tasks.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    // Ordenar: activas por fecha creación, backlog por fecha eliminación
+    tasks.sort((a, b) => {
+        const dateA = new Date(isBacklog ? b.fechaEliminacion : b.fecha);
+        const dateB = new Date(isBacklog ? a.fechaEliminacion : a.fecha);
+        return dateA - dateB;
+    });
 
     tasks.forEach(task => {
         const taskCard = document.createElement('article');
-        taskCard.className = 'task-card';
+        taskCard.className = `task-card ${isBacklog ? 'archived' : ''}`;
         taskCard.dataset.id = task._id;
 
         const statusClass = task.estado === 'done' ? 'badge-done' : 'badge-pending';
         const statusText = task.estado === 'done' ? 'Completada' : 'Pendiente';
+
+        const actionHtml = isBacklog
+            ? `<span class="task-meta" style="font-size: 0.7rem; color: var(--text-muted)">Archivado el: ${new Date(task.fechaEliminacion).toLocaleDateString()}</span>`
+            : `<button class="btn-delete" onclick="deleteTask('${task._id}')">Archivar</button>`;
 
         taskCard.innerHTML = `
             <div>
@@ -51,16 +101,16 @@ function renderTasks(tasks) {
                 <p>${task.descripcion || 'Sin descripción'}</p>
             </div>
             <div class="task-actions">
-                <button class="btn-delete" onclick="deleteTask('${task._id}')">Archivar</button>
+                ${actionHtml}
             </div>
         `;
 
-        taskList.appendChild(taskCard);
+        container.appendChild(taskCard);
     });
 }
 
 /**
- * Handle form submission to create a task
+ * Gestiona el envío del formulario para crear una tarea
  */
 taskForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -98,7 +148,7 @@ taskForm.addEventListener('submit', async (e) => {
 });
 
 /**
- * Delete a task and move to backlog
+ * Elimina una tarea y la mueve al backlog (archivo)
  */
 async function deleteTask(id) {
     if (!confirm('¿Estás seguro de archivar esta tarea? Se guardará en el historial.')) return;
@@ -126,5 +176,5 @@ async function deleteTask(id) {
     }
 }
 
-// Initial Load
+// Carga inicial
 fetchTasks();

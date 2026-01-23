@@ -15,13 +15,23 @@ app.use(express.json());
 
 // --- RUTAS DE LA API ---
 
-// 1. GET: Devuelve todas las tareas 
+// 1. GET: Devuelve todas las tareas activas
 app.get('/api/tasks', async (req, res) => {
     try {
         const tasks = await Task.find(); // Busca todo en MongoDB
         res.json(tasks); // Lo devuelve como JSON
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener tareas' });
+    }
+});
+
+// 1.1 GET: Devuelve todas las tareas archivadas (Backlog)
+app.get('/api/backlog', async (req, res) => {
+    try {
+        const backlog = await Backlog.find().sort({ fechaEliminacion: -1 });
+        res.json(backlog);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener el historial' });
     }
 });
 
@@ -46,13 +56,14 @@ app.delete('/api/tasks/:id', async (req, res) => {
             return res.status(404).json({ error: 'Tarea no encontrada' });
         }
 
-        // Crear registro en el Backlog
+        // Convertir el documento a objeto plano de JS y quitar el _id original
+        const taskData = taskToDelete.toObject();
+        delete taskData._id;
+
+        // Crear registro en el Backlog con todos los datos originales
         const backlogItem = new Backlog({
-            titulo: taskToDelete.titulo,
-            tecnologia: taskToDelete.tecnologia,
-            descripcion: taskToDelete.descripcion,
-            estado: taskToDelete.estado,
-            fecha: taskToDelete.fecha
+            ...taskData,
+            fechaEliminacion: new Date() // Aseguramos la fecha de archivado
         });
 
         await backlogItem.save();
@@ -60,6 +71,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
 
         res.json({ message: 'Tarea movida al historial y eliminada correctamente' });
     } catch (error) {
+        console.error('Error al archivar:', error);
         res.status(500).json({ error: 'Error al procesar la eliminación' });
     }
 });

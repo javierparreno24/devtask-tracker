@@ -58,11 +58,24 @@
                 </form>
             </section>
 
-            <section class="list-section">
+            <nav class="view-tabs">
+                <button id="tab-active" class="tab-btn active" onclick="switchView('active')">Tareas Activas</button>
+                <button id="tab-backlog" class="tab-btn" onclick="switchView('backlog')">Historial (Backlog)</button>
+            </nav>
+
+            <section id="active-section" class="list-section">
                 <h2>Tareas Pendientes</h2>
                 <div id="task-list" class="task-grid">
                     <!-- Las tareas se cargarán aquí dinámicamente -->
                     <div class="loader">Cargando tareas...</div>
+                </div>
+            </section>
+
+            <section id="backlog-section" class="list-section" style="display: none;">
+                <h2>Historial de Tareas</h2>
+                <div id="backlog-list" class="task-grid">
+                    <!-- El historial se cargará aquí dinámicamente -->
+                    <div class="loader">Cargando historial...</div>
                 </div>
             </section>
         </main>
