@@ -1,10 +1,11 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
 // Importamos el modelo que acabamos de crear
-const Task = require('./models/Task');
+const Task = require('./models/task');
 const Backlog = require('./models/backlog');
 const Trash = require('./models/trash');
 
