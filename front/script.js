@@ -169,7 +169,7 @@ function renderTasks(tasks, container, isBacklog, isTrash = false) {
                 <span class="task-meta" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 10px;">
                     Archivado el: ${new Date(task.fechaEliminacion).toLocaleDateString()}
                 </span>
-                <button class="btn-delete-perm" onclick="deleteBacklogItem('${task._id}')">Eliminar Permanente</button>
+                <button class="btn-delete-perm" onclick="deleteBacklogItem('${task._id}')">Eliminar</button>
             `;
         } else if (isTrash) {
             actionHtml = `
