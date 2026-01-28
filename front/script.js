@@ -88,11 +88,22 @@ function renderTasks(tasks, container, isBacklog) {
         const statusText = task.estado === 'done' ? 'Completada' : 'Pendiente';
 
         const actionHtml = isBacklog
-            ? `<span class="task-meta" style="font-size: 0.7rem; color: var(--text-muted)">Archivado el: ${new Date(task.fechaEliminacion).toLocaleDateString()}</span>`
-            : `<button class="btn-delete" onclick="deleteTask('${task._id}')">Archivar</button>`;
+            ? `
+                <span class="task-meta" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 10px;">
+                    Archivado el: ${new Date(task.fechaEliminacion).toLocaleDateString()}
+                </span>
+                <button class="btn-delete-perm" onclick="deleteBacklogItem('${task._id}')">Eliminar Permanente</button>
+            `
+            : `
+                <button class="btn-status ${task.estado === 'done' ? 'btn-pending' : 'btn-done'}" 
+                        onclick="toggleTaskStatus('${task._id}', '${task.estado}')">
+                    ${task.estado === 'done' ? 'Desmarcar' : 'Completar'}
+                </button>
+                <button class="btn-delete" onclick="deleteTask('${task._id}')">Archivar</button>
+            `;
 
         taskCard.innerHTML = `
-            <div>
+            <div class="${task.estado === 'done' ? 'task-content-done' : ''}">
                 <h3>${task.titulo}</h3>
                 <div class="task-meta">
                     <span class="badge badge-tech">${task.tecnologia}</span>
@@ -107,6 +118,30 @@ function renderTasks(tasks, container, isBacklog) {
 
         container.appendChild(taskCard);
     });
+}
+
+/**
+ * Alterna el estado de una tarea entre 'pending' y 'done'
+ */
+async function toggleTaskStatus(id, currentStatus) {
+    const nextStatus = currentStatus === 'pending' ? 'done' : 'pending';
+
+    try {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nextStatus })
+        });
+
+        if (response.ok) {
+            await fetchTasks();
+        } else {
+            alert('Error al actualizar el estado de la tarea');
+        }
+    } catch (error) {
+        console.error('Error al actualizar:', error);
+        alert('Error de conexión');
+    }
 }
 
 /**
@@ -169,6 +204,34 @@ async function deleteTask(id) {
             }, 300);
         } else {
             alert('Error al archivar la tarea');
+        }
+    } catch (error) {
+        console.error('Error al eliminar:', error);
+        alert('Error de conexión');
+    }
+}
+
+async function deleteBacklogItem(id) {
+    if (!confirm('¿Estás seguro de eliminar esta tarea permanentemente? Esta acción no se puede deshacer.')) return;
+
+    try {
+        const response = await fetch(`${BACKLOG_URL}/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            const card = document.querySelector(`.task-card[data-id="${id}"]`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(async () => {
+                    await fetchBacklog();
+                }, 300);
+            } else {
+                await fetchBacklog();
+            }
+        } else {
+            alert('Error al eliminar del historial');
         }
     } catch (error) {
         console.error('Error al eliminar:', error);

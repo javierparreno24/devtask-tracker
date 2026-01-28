@@ -35,6 +35,19 @@ app.get('/api/backlog', async (req, res) => {
     }
 });
 
+// 1.2 DELETE: Elimina permanentemente una tarea del historial
+app.delete('/api/backlog/:id', async (req, res) => {
+    try {
+        const deletedItem = await Backlog.findByIdAndDelete(req.params.id);
+        if (!deletedItem) {
+            return res.status(404).json({ error: 'Registro no encontrado' });
+        }
+        res.json({ message: 'Registro eliminado permanentemente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar del historial' });
+    }
+});
+
 // 2. POST: Crea una nueva tarea 
 app.post('/api/tasks', async (req, res) => {
     try {
@@ -47,7 +60,27 @@ app.post('/api/tasks', async (req, res) => {
     }
 });
 
-// 3. DELETE: Elimina una tarea por su ID y la guarda en el historial (Backlog)
+// 3. PATCH: Actualiza el estado de una tarea (completada/pendiente)
+app.patch('/api/tasks/:id', async (req, res) => {
+    try {
+        const { estado } = req.body;
+        const updatedTask = await Task.findByIdAndUpdate(
+            req.params.id,
+            { estado },
+            { new: true } // Devuelve el documento actualizado
+        );
+
+        if (!updatedTask) {
+            return res.status(404).json({ error: 'Tarea no encontrada' });
+        }
+
+        res.json(updatedTask);
+    } catch (error) {
+        res.status(400).json({ error: 'Error al actualizar la tarea' });
+    }
+});
+
+// 4. DELETE: Elimina una tarea por su ID y la guarda en el historial (Backlog)
 app.delete('/api/tasks/:id', async (req, res) => {
     try {
         const taskToDelete = await Task.findById(req.params.id);

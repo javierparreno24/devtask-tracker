@@ -328,6 +328,75 @@ button:active {
     transform: scale(1.05);
 }
 
+.btn-status {
+    background: transparent;
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    width: auto;
+    margin-top: 0;
+    margin-right: 10px;
+    box-shadow: none;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+}
+
+.btn-done {
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.btn-done:hover {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    transform: scale(1.05);
+}
+
+.btn-pending {
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-pending:hover {
+    background: #f59e0b;
+    color: white;
+    border-color: #f59e0b;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    transform: scale(1.05);
+}
+
+.task-content-done h3,
+.task-content-done p {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.btn-delete-perm {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    width: auto;
+    margin-top: 0;
+    box-shadow: none;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+}
+
+.btn-delete-perm:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+    transform: scale(1.05);
+}
+
 .loader,
 .empty-msg {
     grid-column: 1 / -1;
