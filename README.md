@@ -1,6 +1,6 @@
 # DevTask Tracker 🚀
 
-Una aplicación de gestión de tareas premium diseñada para desarrolladores. Este proyecto cumple con todos los criterios de evaluación del 2º Trimestre.
+Una aplicación de gestión de tareas premium diseñada para desarrolladores. 
 
 ## 🛠️ Estructura del Proyecto
 
