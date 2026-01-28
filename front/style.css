@@ -455,6 +455,83 @@ footer {
     }
 }
 
+.deleted-card {
+    border-color: rgba(244, 63, 94, 0.4);
+    background: rgba(244, 63, 94, 0.05);
+}
+
+.deleted-card:hover {
+    border-color: var(--danger);
+    background: rgba(244, 63, 94, 0.1);
+}
+
+/* Modal System */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(2, 6, 23, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-card {
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-card h2 {
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.modal-card p {
+    color: var(--text-muted);
+    margin-bottom: 25px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.modal-actions button {
+    margin-top: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     header h1 {

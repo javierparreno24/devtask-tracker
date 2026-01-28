@@ -6,6 +6,7 @@ const cors = require('cors');
 // Importamos el modelo que acabamos de crear
 const Task = require('./models/Task');
 const Backlog = require('./models/backlog');
+const Trash = require('./models/trash');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,16 +36,92 @@ app.get('/api/backlog', async (req, res) => {
     }
 });
 
-// 1.2 DELETE: Elimina permanentemente una tarea del historial
+// 1.2 DELETE: Mueve una tarea del historial a la papelera (Recently Deleted)
 app.delete('/api/backlog/:id', async (req, res) => {
     try {
-        const deletedItem = await Backlog.findByIdAndDelete(req.params.id);
-        if (!deletedItem) {
+        const backlogItem = await Backlog.findById(req.params.id);
+
+        if (!backlogItem) {
             return res.status(404).json({ error: 'Registro no encontrado' });
         }
-        res.json({ message: 'Registro eliminado permanentemente' });
+
+        // Convertir a objeto y quitar campos específicos del backlog
+        const taskData = backlogItem.toObject();
+        delete taskData._id;
+        delete taskData.fechaEliminacion;
+
+        // Crear registro en la papelera
+        const trashItem = new Trash({
+            ...taskData,
+            fechaBorrado: new Date(),
+            origen: 'backlog'
+        });
+
+        await trashItem.save();
+        await Backlog.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Movido a eliminados recientemente' });
     } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar del historial' });
+        console.error('Error al mover a papelera:', error);
+        res.status(500).json({ error: 'Error al procesar la eliminación' });
+    }
+});
+
+// 1.3 Trash Routes
+app.get('/api/trash', async (req, res) => {
+    try {
+        const trashItems = await Trash.find().sort({ fechaBorrado: -1 });
+        res.json(trashItems);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener la papelera' });
+    }
+});
+
+app.delete('/api/trash/:id', async (req, res) => {
+    try {
+        await Trash.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Eliminado permanentemente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar permanentemente' });
+    }
+});
+
+app.post('/api/trash/:id/restore', async (req, res) => {
+    try {
+        const itemToRestore = await Trash.findById(req.params.id);
+        if (!itemToRestore) return res.status(404).json({ error: 'No encontrado' });
+
+        const taskData = itemToRestore.toObject();
+        delete taskData._id;
+        delete taskData.fechaBorrado;
+        delete taskData.origen;
+
+        const newTask = new Task(taskData);
+        await newTask.save();
+        await Trash.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Tarea restaurada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al restaurar' });
+    }
+});
+
+// Enviar tarea a la papelera (Eliminar sin historial)
+app.post('/api/tasks/:id/trash', async (req, res) => {
+    try {
+        const taskToDelete = await Task.findById(req.params.id);
+        if (!taskToDelete) return res.status(404).json({ error: 'No encontrada' });
+
+        const taskData = taskToDelete.toObject();
+        delete taskData._id;
+
+        const trashItem = new Trash({ ...taskData, fechaBorrado: new Date(), origen: 'tasks' });
+        await trashItem.save();
+        await Task.findByIdAndDelete(req.params.id);
+
+        res.json({ message: 'Movido a eliminados recientemente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al mover a eliminados' });
     }
 });
 

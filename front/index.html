@@ -61,6 +61,7 @@
             <nav class="view-tabs">
                 <button id="tab-active" class="tab-btn active" onclick="switchView('active')">Tareas Activas</button>
                 <button id="tab-backlog" class="tab-btn" onclick="switchView('backlog')">Historial (Backlog)</button>
+                <button id="tab-trash" class="tab-btn" onclick="switchView('trash')">Eliminados</button>
             </nav>
 
             <section id="active-section" class="list-section">
@@ -78,11 +79,31 @@
                     <div class="loader">Cargando historial...</div>
                 </div>
             </section>
+
+            <section id="trash-section" class="list-section" style="display: none;">
+                <h2>Eliminados Recientemente</h2>
+                <div id="trash-list" class="task-grid">
+                    <!-- Los eliminados se cargarán aquí dinámicamente -->
+                    <div class="loader">Cargando papelera...</div>
+                </div>
+            </section>
         </main>
 
         <footer>
             <p>&copy; 2026 DevTask Tracker - Proyecto FullStack Vanilla</p>
         </footer>
+    </div>
+
+    <!-- Custom Modal System -->
+    <div id="modal-system" class="modal-overlay" style="display: none;">
+        <div class="modal-card glass-card">
+            <h2 id="modal-title">Título</h2>
+            <p id="modal-message">Mensaje del sistema...</p>
+            <div class="modal-actions">
+                <button id="modal-btn-cancel" class="tab-btn">Cancelar</button>
+                <button id="modal-btn-confirm">Confirmar</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

@@ -1,13 +1,60 @@
 const API_URL = 'http://localhost:3000/api/tasks';
 const BACKLOG_URL = 'http://localhost:3000/api/backlog';
+const TRASH_URL = 'http://localhost:3000/api/trash';
 
 // Elementos del DOM
 const taskForm = document.getElementById('task-form');
 const taskList = document.getElementById('task-list');
 const backlogList = document.getElementById('backlog-list');
+const trashList = document.getElementById('trash-list');
 const btnSave = document.getElementById('btn-save');
 
+// Modal Elements
+const modalOverlay = document.getElementById('modal-system');
+const modalTitle = document.getElementById('modal-title');
+const modalMessage = document.getElementById('modal-message');
+const modalBtnConfirm = document.getElementById('modal-btn-confirm');
+const modalBtnCancel = document.getElementById('modal-btn-cancel');
+
 let currentView = 'active'; // 'active' o 'backlog'
+
+/**
+ * Muestra un modal de confirmación profesional
+ */
+function showConfirmModal(title, message, isAlert = false) {
+    return new Promise((resolve) => {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modalOverlay.style.display = 'flex';
+
+        modalBtnCancel.style.display = isAlert ? 'none' : 'block';
+        modalBtnConfirm.textContent = isAlert ? 'Entendido' : 'Confirmar';
+
+        const handleConfirm = () => {
+            closeModal();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            closeModal();
+            resolve(false);
+        };
+
+        modalBtnConfirm.onclick = handleConfirm;
+        modalBtnCancel.onclick = handleCancel;
+    });
+}
+
+function closeModal() {
+    modalOverlay.style.display = 'none';
+}
+
+/**
+ * Alias para mostrar alertas con el nuevo diseño
+ */
+async function showAlert(title, message) {
+    await showConfirmModal(title, message, true);
+}
 
 /**
  * Obtiene y muestra todas las tareas
@@ -46,61 +93,101 @@ function switchView(view) {
     // Actualizar botones de pestañas
     document.getElementById('tab-active').classList.toggle('active', view === 'active');
     document.getElementById('tab-backlog').classList.toggle('active', view === 'backlog');
+    document.getElementById('tab-trash').classList.toggle('active', view === 'trash');
 
     // Mostrar/ocultar secciones
     document.getElementById('active-section').style.display = view === 'active' ? 'block' : 'none';
     document.getElementById('backlog-section').style.display = view === 'backlog' ? 'block' : 'none';
+    document.getElementById('trash-section').style.display = view === 'trash' ? 'block' : 'none';
 
     // Cargar datos según la vista
     if (view === 'active') {
         fetchTasks();
-    } else {
+    } else if (view === 'backlog') {
         fetchBacklog();
+    } else {
+        fetchTrash();
+    }
+}
+
+/**
+ * Obtiene y muestra los elementos eliminados recientemente
+ */
+async function fetchTrash() {
+    try {
+        const response = await fetch(TRASH_URL);
+        const tasks = await response.json();
+        renderTasks(tasks, trashList, false, true); // isBacklog=false, isTrash=true
+    } catch (error) {
+        console.error('Error al cargar papelera:', error);
+        trashList.innerHTML = '<div class="empty-msg">Error al cargar la papelera.</div>';
     }
 }
 
 /**
  * Renderiza la lista de tareas en el DOM
  */
-function renderTasks(tasks, container, isBacklog) {
+function renderTasks(tasks, container, isBacklog, isTrash = false) {
     if (tasks.length === 0) {
-        container.innerHTML = isBacklog
-            ? '<div class="empty-msg">El historial está vacío.</div>'
-            : '<div class="empty-msg">No hay tareas pendientes. Empieza creando una arriba.</div>';
+        let msg = 'No hay tareas pendientes.';
+        if (isBacklog) msg = 'El historial está vacío.';
+        if (isTrash) msg = 'La papelera está vacía.';
+
+        container.innerHTML = `<div class="empty-msg">${msg}</div>`;
         return;
     }
 
     container.innerHTML = '';
 
-    // Ordenar: activas por fecha creación, backlog por fecha eliminación
+    // Ordenar: activas por fecha creación, backlog por fecha eliminación, trash por fecha borrado
     tasks.sort((a, b) => {
-        const dateA = new Date(isBacklog ? b.fechaEliminacion : b.fecha);
-        const dateB = new Date(isBacklog ? a.fechaEliminacion : a.fecha);
+        let dateA, dateB;
+        if (isBacklog) {
+            dateA = new Date(b.fechaEliminacion);
+            dateB = new Date(a.fechaEliminacion);
+        } else if (isTrash) {
+            dateA = new Date(b.fechaBorrado);
+            dateB = new Date(a.fechaBorrado);
+        } else {
+            dateA = new Date(b.fecha);
+            dateB = new Date(a.fecha);
+        }
         return dateA - dateB;
     });
 
     tasks.forEach(task => {
         const taskCard = document.createElement('article');
-        taskCard.className = `task-card ${isBacklog ? 'archived' : ''}`;
+        taskCard.className = `task-card ${isBacklog ? 'archived' : ''} ${isTrash ? 'deleted-card' : ''}`;
         taskCard.dataset.id = task._id;
 
         const statusClass = task.estado === 'done' ? 'badge-done' : 'badge-pending';
         const statusText = task.estado === 'done' ? 'Completada' : 'Pendiente';
 
-        const actionHtml = isBacklog
-            ? `
+        let actionHtml = '';
+        if (isBacklog) {
+            actionHtml = `
                 <span class="task-meta" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 10px;">
                     Archivado el: ${new Date(task.fechaEliminacion).toLocaleDateString()}
                 </span>
                 <button class="btn-delete-perm" onclick="deleteBacklogItem('${task._id}')">Eliminar Permanente</button>
-            `
-            : `
-                <button class="btn-status ${task.estado === 'done' ? 'btn-pending' : 'btn-done'}" 
-                        onclick="toggleTaskStatus('${task._id}', '${task.estado}')">
-                    ${task.estado === 'done' ? 'Desmarcar' : 'Completar'}
-                </button>
-                <button class="btn-delete" onclick="deleteTask('${task._id}')">Archivar</button>
             `;
+        } else if (isTrash) {
+            actionHtml = `
+                <button class="btn-status btn-done" onclick="restoreTrashItem('${task._id}')">Restaurar</button>
+                <button class="btn-delete" onclick="deleteTrashItemPermanently('${task._id}')">Borrar Definitivo</button>
+            `;
+        } else {
+            actionHtml = `
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end;">
+                    <button class="btn-status ${task.estado === 'done' ? 'btn-pending' : 'btn-done'}" 
+                            onclick="toggleTaskStatus('${task._id}', '${task.estado}')">
+                        ${task.estado === 'done' ? 'Desmarcar' : 'Completar'}
+                    </button>
+                    <button class="btn-delete" style="background: rgba(139, 92, 246, 0.1); border-color: var(--primary)" onclick="deleteTask('${task._id}')">Archivar</button>
+                    <button class="btn-delete" onclick="deleteTaskDirect('${task._id}')">Eliminar</button>
+                </div>
+            `;
+        }
 
         taskCard.innerHTML = `
             <div class="${task.estado === 'done' ? 'task-content-done' : ''}">
@@ -108,8 +195,10 @@ function renderTasks(tasks, container, isBacklog) {
                 <div class="task-meta">
                     <span class="badge badge-tech">${task.tecnologia}</span>
                     <span class="badge ${statusClass}">${statusText}</span>
+                    ${isTrash ? `<span class="badge" style="background: rgba(244, 63, 94, 0.1); color: var(--danger)">Borrado</span>` : ''}
                 </div>
                 <p>${task.descripcion || 'Sin descripción'}</p>
+                ${isTrash ? `<small style="color: var(--text-muted)">Borrado el: ${new Date(task.fechaBorrado).toLocaleString()}</small>` : ''}
             </div>
             <div class="task-actions">
                 ${actionHtml}
@@ -136,11 +225,11 @@ async function toggleTaskStatus(id, currentStatus) {
         if (response.ok) {
             await fetchTasks();
         } else {
-            alert('Error al actualizar el estado de la tarea');
+            await showAlert('Error', 'No se pudo actualizar el estado de la tarea.');
         }
     } catch (error) {
         console.error('Error al actualizar:', error);
-        alert('Error de conexión');
+        await showAlert('Error de Conexión', 'Hubo un problema al actualizar la tarea.');
     }
 }
 
@@ -171,11 +260,11 @@ taskForm.addEventListener('submit', async (e) => {
             taskForm.reset();
             await fetchTasks();
         } else {
-            alert('Error al guardar la tarea');
+            await showAlert('Error', 'No se pudo guardar la tarea en el servidor.');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error de conexión');
+        await showAlert('Error de Conexión', 'No se pudo establecer comunicación con el backend.');
     } finally {
         btnSave.disabled = false;
         btnSave.textContent = 'Guardar Tarea';
@@ -186,7 +275,8 @@ taskForm.addEventListener('submit', async (e) => {
  * Elimina una tarea y la mueve al backlog (archivo)
  */
 async function deleteTask(id) {
-    if (!confirm('¿Estás seguro de archivar esta tarea? Se guardará en el historial.')) return;
+    const confirmed = await showConfirmModal('Archivar Tarea', '¿Deseas mover esta tarea al historial (Backlog)?');
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`${API_URL}/${id}`, {
@@ -196,23 +286,26 @@ async function deleteTask(id) {
         if (response.ok) {
             // Animación de salida opcional
             const card = document.querySelector(`.task-card[data-id="${id}"]`);
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.8)';
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+            }
 
             setTimeout(async () => {
                 await fetchTasks();
             }, 300);
         } else {
-            alert('Error al archivar la tarea');
+            await showAlert('Error', 'No se pudo archivar la tarea.');
         }
     } catch (error) {
         console.error('Error al eliminar:', error);
-        alert('Error de conexión');
+        await showAlert('Error de Conexión', 'Hubo un problema al intentar archivar.');
     }
 }
 
 async function deleteBacklogItem(id) {
-    if (!confirm('¿Estás seguro de eliminar esta tarea permanentemente? Esta acción no se puede deshacer.')) return;
+    const confirmed = await showConfirmModal('Mover a Papelera', '¿Quieres mover esta tarea del historial a Eliminados Recientemente?');
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`${BACKLOG_URL}/${id}`, {
@@ -231,11 +324,77 @@ async function deleteBacklogItem(id) {
                 await fetchBacklog();
             }
         } else {
-            alert('Error al eliminar del historial');
+            await showAlert('Error', 'No se pudo mover a la papelera.');
         }
     } catch (error) {
         console.error('Error al eliminar:', error);
-        alert('Error de conexión');
+        await showAlert('Error de Conexión', 'Problema al conectar con el servidor.');
+    }
+}
+
+/**
+ * Mueve una tarea a la papelera (Recently Deleted)
+ */
+async function deleteTaskDirect(id) {
+    const confirmed = await showConfirmModal('Eliminar Tarea', '¿Mover esta tarea a eliminados recientemente?');
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`${API_URL}/${id}/trash`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            await fetchTasks();
+        } else {
+            await showAlert('Error', 'No se pudo mover a la papelera.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert('Error de Conexión', 'Servidor no disponible.');
+    }
+}
+
+/**
+ * Restaura una tarea desde la papelera
+ */
+async function restoreTrashItem(id) {
+    try {
+        const response = await fetch(`${TRASH_URL}/${id}/restore`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            await fetchTrash();
+        } else {
+            await showAlert('Error', 'No se pudo restaurar la tarea.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert('Error de Conexión', 'Problema al conectar con el servidor.');
+    }
+}
+
+/**
+ * Elimina permanentemente de la papelera
+ */
+async function deleteTrashItemPermanently(id) {
+    const confirmed = await showConfirmModal('Borrado Definitivo', '¿Estás seguro de eliminar esto de forma irreversible?');
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`${TRASH_URL}/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            await fetchTrash();
+        } else {
+            await showAlert('Error', 'No se pudo eliminar permanentemente.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await showAlert('Error de Conexión', 'Hubo un problema al comunicar con el servidor.');
     }
 }
 
