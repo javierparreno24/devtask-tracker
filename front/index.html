@@ -9,84 +9,138 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>DevTask <span>Tracker</span></h1>
-            <p>Gestión de tareas técnicas para desarrolladores</p>
-        </header>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-card">
+            <div class="sidebar-logo">
+                <i data-lucide="layout-dashboard"></i>
+                <span>DevTask <span>Tracker</span></span>
+            </div>
 
-        <main>
-            <section class="form-section glass-card">
-                <form id="task-form">
-                    <div class="form-group">
-                        <label for="titulo">Título de la Tarea</label>
-                        <input type="text" id="titulo" placeholder="Ej: Implementar Auth" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="descripcion">Descripción</label>
-                        <textarea id="descripcion" placeholder="Explica brevemente qué hay que hacer..."></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="tecnologia">Tecnología</label>
-                            <select id="tecnologia" required>
-                                <option value="" disabled selected>Selecciona una...</option>
-                                <option value="JavaScript">JavaScript</option>
-                                <option value="Python">Python</option>
-                                <option value="Java">Java</option>
-                                <option value="MongoDB">MongoDB</option>
-                                <option value="React">React</option>
-                                <option value="Otros">Otros</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="estado">Estado Inicial</label>
-                            <select id="estado" required>
-                                <option value="pending">Pendiente</option>
-                                <option value="done">Completada</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="btn-save">Guardar Tarea</button>
-                </form>
-            </section>
-
-            <nav class="view-tabs">
-                <button id="tab-active" class="tab-btn active" onclick="switchView('active')">Tareas Activas</button>
-                <button id="tab-backlog" class="tab-btn" onclick="switchView('backlog')">Historial (Backlog)</button>
-                <button id="tab-trash" class="tab-btn" onclick="switchView('trash')">Eliminados</button>
+            <nav class="sidebar-nav">
+                <button id="tab-active" class="nav-item active" onclick="switchView('active')">
+                    <i data-lucide="list-todo"></i>
+                    <span>Tareas Activas</span>
+                </button>
+                <button id="tab-backlog" class="nav-item" onclick="switchView('backlog')">
+                    <i data-lucide="archive"></i>
+                    <span>Historial</span>
+                </button>
+                <button id="tab-trash" class="nav-item" onclick="switchView('trash')">
+                    <i data-lucide="trash-2"></i>
+                    <span>Eliminados</span>
+                </button>
             </nav>
 
-            <section id="active-section" class="list-section">
-                <h2>Tareas Pendientes</h2>
-                <div id="task-list" class="task-grid">
-                    <!-- Las tareas se cargarán aquí dinámicamente -->
-                    <div class="loader">Cargando tareas...</div>
-                </div>
-            </section>
+            <div class="sidebar-footer">
+                <p>&copy; 2026 DevTask</p>
+            </div>
+        </aside>
 
-            <section id="backlog-section" class="list-section" style="display: none;">
-                <h2>Historial de Tareas</h2>
-                <div id="backlog-list" class="task-grid">
-                    <!-- El historial se cargará aquí dinámicamente -->
-                    <div class="loader">Cargando historial...</div>
+        <!-- Main Content Area -->
+        <main class="dashboard-main">
+            <header class="main-header">
+                <div class="header-info">
+                    <h1>Bienvenido, Desarrollador</h1>
+                    <p>Gestiona tu flujo de trabajo técnico con precisión.</p>
                 </div>
-            </section>
+                <!-- Action to toggle form (conceptually, or just keep it there) -->
+            </header>
 
-            <section id="trash-section" class="list-section" style="display: none;">
-                <h2>Eliminados Recientemente</h2>
-                <div id="trash-list" class="task-grid">
-                    <!-- Los eliminados se cargarán aquí dinámicamente -->
-                    <div class="loader">Cargando papelera...</div>
+            <div class="dashboard-grid">
+                <!-- Form Section -->
+                <section class="form-section glass-card">
+                    <div class="section-header">
+                        <i data-lucide="plus-circle"></i>
+                        <h2>Nueva Tarea</h2>
+                    </div>
+                    <form id="task-form">
+                        <div class="form-group">
+                            <label for="titulo">Título</label>
+                            <input type="text" id="titulo" placeholder="Ej: Implementar Auth" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="descripcion">Descripción</label>
+                            <textarea id="descripcion" placeholder="¿Qué hay que hacer?"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tecnologia">Tecnología</label>
+                                <select id="tecnologia" required>
+                                    <option value="" disabled selected>Selecciona...</option>
+                                    <option value="JavaScript">JavaScript</option>
+                                    <option value="Python">Python</option>
+                                    <option value="Java">Java</option>
+                                    <option value="MongoDB">MongoDB</option>
+                                    <option value="React">React</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="estado">Estado</label>
+                                <select id="estado" required>
+                                    <option value="pending">Pendiente</option>
+                                    <option value="done">Completada</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-save" class="btn-primary">
+                            <span>Guardar Tarea</span>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- List Sections -->
+                <div class="content-view">
+                    <section id="active-section" class="list-section">
+                        <div class="section-header">
+                            <i data-lucide="check-circle-2"></i>
+                            <h2>Tareas Pendientes</h2>
+                        </div>
+                        <div id="task-list" class="task-grid">
+                            <div class="loader">Cargando tareas...</div>
+                        </div>
+                    </section>
+
+                    <section id="backlog-section" class="list-section" style="display: none;">
+                        <div class="section-header">
+                            <i data-lucide="archive"></i>
+                            <h2>Historial de Tareas</h2>
+                        </div>
+                        <div id="backlog-list" class="task-grid">
+                            <div class="loader">Cargando historial...</div>
+                        </div>
+                    </section>
+
+                    <section id="trash-section" class="list-section" style="display: none;">
+                        <div class="section-header" style="color: var(--danger)">
+                            <i data-lucide="trash-2"></i>
+                            <h2>Eliminados Recientemente</h2>
+                        </div>
+                        <div id="trash-list" class="task-grid">
+                            <div class="loader">Cargando papelera...</div>
+                        </div>
+                    </section>
                 </div>
-            </section>
+            </div>
+        </main>
+
+        <section id="trash-section" class="list-section" style="display: none;">
+            <h2>Eliminados Recientemente</h2>
+            <div id="trash-list" class="task-grid">
+                <!-- Los eliminados se cargarán aquí dinámicamente -->
+                <div class="loader">Cargando papelera...</div>
+            </div>
+        </section>
         </main>
 
         <footer>
