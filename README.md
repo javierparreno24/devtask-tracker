@@ -35,8 +35,6 @@ Una aplicación de gestión de tareas premium diseñada para desarrolladores. Es
 - **RA1. Interfaz (25%)**: Diseño premium (Glassmorphism), carga dinámica con Fetch API y total responsividad.
 - **RA4. Despliegue/Git (15%)**: Repositorio organizado con este README detallado.
 
-## 📸 Capturas de pantalla
-*(Recuerda adjuntar la captura de pantalla de MongoDB Atlas solicitada en la entrega)*
 
 ---
 Desarrollado por [Javier Parreño Garrido]
